@@ -1,14 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/Zigelzi/go-rss-gator/internal/config"
+	"github.com/Zigelzi/go-rss-gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 type state struct {
 	currentConfig *config.Config
+	db            *database.Queries
 }
 
 func main() {
@@ -17,9 +21,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	db, err := sql.Open("postgres", newConfig.DbURL)
+	if err != nil {
+		log.Fatalf("unable to open database connection: %w", err)
+	}
+	dbQueries := database.New(db)
 
 	appState := state{
 		currentConfig: &newConfig,
+		db:            dbQueries,
 	}
 
 	// Registering the existing commands.
