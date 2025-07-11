@@ -18,7 +18,17 @@ func handlerLogin(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
 		return errors.New("username is required argument")
 	}
-	err := s.currentConfig.SetUser(cmd.Args[0])
+
+	name := cmd.Args[0]
+	_, err := s.db.GetUser(context.Background(), name)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("unable to query for existing user: %w", err)
+	}
+	if err != nil && err == sql.ErrNoRows {
+		return fmt.Errorf("user with username %s doesn't exist ", name)
+	}
+
+	err = s.currentConfig.SetUser(cmd.Args[0])
 	if err != nil {
 		return err
 	}
