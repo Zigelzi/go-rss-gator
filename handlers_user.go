@@ -66,8 +66,9 @@ func handlerRegister(s *state, cmd command) error {
 		return fmt.Errorf("unable to create user %w", err)
 	}
 
-	log.Printf("created user: %v", createdUser)
-	s.currentConfig.SetUser(createdUser.Name)
+	log.Println("created user:")
+	log.Printf("%v", createdUser)
+	err = s.currentConfig.SetUser(createdUser.Name)
 	if err != nil {
 		return fmt.Errorf("unable to set user to %s: %w", createdUser.Name, err)
 	}
