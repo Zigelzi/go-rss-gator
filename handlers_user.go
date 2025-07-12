@@ -58,8 +58,8 @@ func handlerRegister(s *state, cmd command) error {
 	user := database.CreateUserParams{
 		ID:        uuid.New(),
 		Name:      name,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 	createdUser, err := s.db.CreateUser(context.Background(), user)
 	if err != nil {
@@ -68,5 +68,16 @@ func handlerRegister(s *state, cmd command) error {
 
 	log.Printf("created user: %v", createdUser)
 	s.currentConfig.SetUser(createdUser.Name)
+	if err != nil {
+		return fmt.Errorf("unable to set user to %s: %w", createdUser.Name, err)
+	}
+	return nil
+}
+
+func handleReset(s *state, cmd command) error {
+	err := s.db.DeleteUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("unable to delete users: %w", err)
+	}
 	return nil
 }
