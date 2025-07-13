@@ -82,3 +82,27 @@ func handleReset(s *state, cmd command) error {
 	}
 	return nil
 }
+
+// Lists all users that are registered to the service.
+// Highlights the currently logged in user with (current)
+func handleListUsers(s *state, cmd command) error {
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("unable to get users: %w", err)
+	}
+	if len(users) == 0 {
+		fmt.Println("No registered users.")
+		return nil
+	}
+
+	fmt.Println("Users:")
+	for i, user := range users {
+		if i != len(users) {
+			fmt.Printf("* %s\n", user.Name)
+		} else {
+			fmt.Printf("* %s", user.Name)
+
+		}
+	}
+	return nil
+}
