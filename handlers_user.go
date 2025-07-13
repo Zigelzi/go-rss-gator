@@ -97,12 +97,14 @@ func handleListUsers(s *state, cmd command) error {
 
 	fmt.Println("Users:")
 	for i, user := range users {
-		if i != len(users) {
-			fmt.Printf("* %s\n", user.Name)
-		} else {
-			fmt.Printf("* %s", user.Name)
-
+		printedText := "* " + user.Name
+		if user.Name == s.currentConfig.CurrentUserName {
+			printedText += " (current)"
 		}
+		if i != len(users) {
+			printedText += "\n"
+		}
+		fmt.Print(printedText)
 	}
 	return nil
 }
