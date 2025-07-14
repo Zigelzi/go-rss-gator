@@ -38,6 +38,7 @@ func main() {
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handleReset)
 	cmds.register("users", handleListUsers)
+	cmds.register("agg", handleAggregate)
 
 	if len(os.Args) < 2 {
 		log.Fatal("command arguments are missing")
