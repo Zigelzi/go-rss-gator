@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Zigelzi/go-rss-gator/internal/database"
@@ -63,4 +64,28 @@ func handleAddFeed(s *state, cmd command) error {
 	}
 	fmt.Printf("Successfully added RSS feed with name [%s] and URL [%s] to user [%s]", feed.Name, feed.Url, user.Name)
 	return nil
+}
+
+func handleListFeeds(s *state, cmd command) error {
+	feeds, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("unable to get feeds: %w", err)
+	}
+
+	if len(feeds) == 0 {
+		fmt.Println("No feeds found")
+		return nil
+	}
+
+	fmt.Println("All RSS feeds:")
+	for _, feed := range feeds {
+		printFeed(feed)
+	}
+	return nil
+}
+
+func printFeed(feed database.GetFeedsRow) {
+	fmt.Printf("%s\n", feed.FeedName)
+	fmt.Printf("Source: %s | Owner: %v\n", feed.FeedUrl, feed.UserName.String)
+	fmt.Println(strings.Repeat("-", 10))
 }

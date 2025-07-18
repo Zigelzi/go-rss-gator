@@ -34,12 +34,19 @@ func main() {
 
 	// Registering the existing commands.
 	cmds := commands{}
+
+	// Debug
+	cmds.register("reset", handleReset)
+
+	// Users
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
-	cmds.register("reset", handleReset)
 	cmds.register("users", handleListUsers)
+
+	// RSS feeds
 	cmds.register("agg", handleAggregate)
 	cmds.register("addfeed", handleAddFeed)
+	cmds.register("feeds", handleListFeeds)
 
 	if len(os.Args) < 2 {
 		log.Fatal("command arguments are missing")
