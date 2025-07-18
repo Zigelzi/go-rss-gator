@@ -77,15 +77,16 @@ func handleListFeeds(s *state, cmd command) error {
 		return nil
 	}
 
-	fmt.Println("All RSS feeds:")
+	fmt.Println("All RSS feeds")
+	fmt.Println("[Username] RSS feed title - RSS feed URL")
+	fmt.Println(strings.Repeat("-", 10))
 	for _, feed := range feeds {
 		printFeed(feed)
 	}
+	fmt.Println(strings.Repeat("-", 10))
 	return nil
 }
 
 func printFeed(feed database.GetFeedsRow) {
-	fmt.Printf("%s\n", feed.FeedName)
-	fmt.Printf("Source: %s | Owner: %v\n", feed.FeedUrl, feed.UserName.String)
-	fmt.Println(strings.Repeat("-", 10))
+	fmt.Printf("[%s] %s - %s\n", feed.UserName.String, feed.FeedName, feed.FeedUrl)
 }
