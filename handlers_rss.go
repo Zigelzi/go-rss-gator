@@ -115,6 +115,9 @@ func handleFollowFeed(s *state, cmd command) error {
 		UserID:    user.ID,
 		FeedID:    feed.ID,
 	})
+	if err != nil {
+		return fmt.Errorf("unable to follow feed [%s]: %w", feedURL, err)
+	}
 
 	fmt.Printf("%s started to follow feed: %s - %s\n",
 		followedFeed.UserName.String,
