@@ -47,6 +47,7 @@ func main() {
 	cmds.register("agg", handleAggregate)
 	cmds.register("addfeed", handleAddFeed)
 	cmds.register("feeds", handleListFeeds)
+	cmds.register("follow", handleFollowFeed)
 
 	if len(os.Args) < 2 {
 		log.Fatal("command arguments are missing")

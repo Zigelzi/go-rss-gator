@@ -14,21 +14,12 @@ import (
 )
 
 const createFeed = `-- name: CreateFeed :one
-INSERT INTO feeds (
-    id,
-    created_at,
-    updated_at,
-    name,
-    url,
-    user_id
-) VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6
-) RETURNING id, created_at, updated_at, name, url, user_id
+INSERT INTO
+    feeds (id, created_at, updated_at, name, url, user_id)
+VALUES
+    ($1, $2, $3, $4, $5, $6)
+RETURNING
+    id, created_at, updated_at, name, url, user_id
 `
 
 type CreateFeedParams struct {
@@ -61,9 +52,96 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 	return i, err
 }
 
+const followFeed = `-- name: FollowFeed :one
+WITH
+    inserted_feed_follow AS (
+        INSERT INTO
+            feed_follows AS ff (id, created_at, updated_at, user_ID, feed_ID)
+        VALUES
+            ($1, $2, $3, $4, $5)
+        RETURNING
+            id, created_at, updated_at, user_id, feed_id
+    )
+SELECT
+    iff.id, iff.created_at, iff.updated_at, iff.user_id, iff.feed_id,
+    f.name as feed_name,
+    u.name as user_name
+FROM
+    inserted_feed_follow iff
+    LEFT JOIN feeds f ON f.id = iff.feed_ID
+    LEFT JOIN users u ON u.id = iff.user_ID
+`
+
+type FollowFeedParams struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	FeedID    uuid.UUID
+}
+
+type FollowFeedRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	FeedID    uuid.UUID
+	FeedName  sql.NullString
+	UserName  sql.NullString
+}
+
+func (q *Queries) FollowFeed(ctx context.Context, arg FollowFeedParams) (FollowFeedRow, error) {
+	row := q.db.QueryRowContext(ctx, followFeed,
+		arg.ID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.UserID,
+		arg.FeedID,
+	)
+	var i FollowFeedRow
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
+		&i.FeedID,
+		&i.FeedName,
+		&i.UserName,
+	)
+	return i, err
+}
+
+const getFeedByURL = `-- name: GetFeedByURL :one
+SELECT
+    id, created_at, updated_at, name, url, user_id
+from
+    feeds
+WHERE
+    feeds.url = $1
+`
+
+func (q *Queries) GetFeedByURL(ctx context.Context, url string) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, getFeedByURL, url)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Url,
+		&i.UserID,
+	)
+	return i, err
+}
+
 const getFeeds = `-- name: GetFeeds :many
-SELECT f.name as feed_name, f.url as feed_url, u.name as user_name FROM feeds f
-LEFT JOIN users u ON u.id = f.user_id
+SELECT
+    f.name AS feed_name,
+    f.url AS feed_url,
+    u.name AS user_name
+FROM
+    feeds f
+    LEFT JOIN users u ON u.id = f.user_id
 `
 
 type GetFeedsRow struct {

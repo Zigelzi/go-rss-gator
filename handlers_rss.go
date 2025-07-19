@@ -90,3 +90,35 @@ func handleListFeeds(s *state, cmd command) error {
 func printFeed(feed database.GetFeedsRow) {
 	fmt.Printf("[%s] %s - %s\n", feed.UserName.String, feed.FeedName, feed.FeedUrl)
 }
+
+func handleFollowFeed(s *state, cmd command) error {
+	if len(cmd.Args) < 1 {
+		return errors.New("feed URL is required argument")
+	}
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("got over 1 argument (%d): %v", len(cmd.Args), cmd.Args)
+	}
+	feedURL := cmd.Args[0]
+	feed, err := s.db.GetFeedByURL(context.Background(), feedURL)
+	if err != nil {
+		return fmt.Errorf("unable to get feed with URL [%s]: %w", feedURL, err)
+	}
+	user, err := s.db.GetUser(context.Background(), s.currentConfig.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("unable to get user [%s]: %w", s.currentConfig.CurrentUserName, err)
+	}
+
+	followedFeed, err := s.db.FollowFeed(context.Background(), database.FollowFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	})
+
+	fmt.Printf("%s started to follow feed: %s - %s\n",
+		followedFeed.UserName.String,
+		followedFeed.FeedName.String,
+		feedURL)
+	return nil
+}
