@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -49,13 +50,14 @@ func handleAddFeed(s *state, cmd command) error {
 		return fmt.Errorf("unable to get current user: %w", err)
 	}
 
+	feedURL := cmd.Args[1]
 	feed, err := s.db.CreateFeed(context.Background(),
 		database.CreateFeedParams{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 			Name:      cmd.Args[0],
-			Url:       cmd.Args[1],
+			Url:       feedURL,
 			UserID:    user.ID,
 		},
 	)
@@ -63,6 +65,17 @@ func handleAddFeed(s *state, cmd command) error {
 		return fmt.Errorf("unable to create new feed: %w", err)
 	}
 	fmt.Printf("Successfully added RSS feed with name [%s] and URL [%s] to user [%s]", feed.Name, feed.Url, user.Name)
+
+	_, err = s.db.FollowFeed(context.Background(), database.FollowFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to follow feed [%s]: %w", feedURL, err)
+	}
 	return nil
 }
 
@@ -101,6 +114,10 @@ func handleFollowFeed(s *state, cmd command) error {
 	feedURL := cmd.Args[0]
 	feed, err := s.db.GetFeedByURL(context.Background(), feedURL)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Printf("Feed with url [%s] doesn't exist. Add it by using 'addfeed [url]' command first", feedURL)
+			return nil
+		}
 		return fmt.Errorf("unable to get feed with URL [%s]: %w", feedURL, err)
 	}
 	user, err := s.db.GetUser(context.Background(), s.currentConfig.CurrentUserName)
@@ -120,8 +137,29 @@ func handleFollowFeed(s *state, cmd command) error {
 	}
 
 	fmt.Printf("%s started to follow feed: %s - %s\n",
-		followedFeed.UserName.String,
-		followedFeed.FeedName.String,
+		followedFeed.UserName,
+		followedFeed.FeedName,
 		feedURL)
+	return nil
+}
+
+func handleListFollowedFeeds(s *state, cmd command) error {
+	user, err := s.db.GetUser(context.Background(), s.currentConfig.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("unable to get user: %w", err)
+	}
+	feeds, err := s.db.GetUserFeedFollows(context.Background(), user.ID)
+	if err != nil {
+		return fmt.Errorf("unable to get feeds: %w", err)
+	}
+
+	if len(feeds) == 0 {
+		fmt.Println("You are not following any feeds. Follow on by using 'addfeed [url]' command")
+		return nil
+	}
+	fmt.Println("The RSS feeds you're following:")
+	for _, feed := range feeds {
+		fmt.Println(feed.FeedName)
+	}
 	return nil
 }

@@ -39,5 +39,17 @@ SELECT
     u.name as user_name
 FROM
     inserted_feed_follow iff
-    LEFT JOIN feeds f ON f.id = iff.feed_ID
-    LEFT JOIN users u ON u.id = iff.user_ID;
+    INNER JOIN feeds f ON f.id = iff.feed_ID
+    INNER JOIN users u ON u.id = iff.user_ID;
+
+-- name: GetUserFeedFollows :many
+SELECT
+    ff.*,
+    f.name as feed_name,
+    u.name as user_name
+FROM
+    feed_follows ff
+    INNER JOIN feeds f ON f.id = ff.feed_ID
+    INNER JOIN users u ON u.id = ff.user_ID
+WHERE
+    ff.user_ID = $1;

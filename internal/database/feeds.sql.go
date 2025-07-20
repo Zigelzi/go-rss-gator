@@ -68,8 +68,8 @@ SELECT
     u.name as user_name
 FROM
     inserted_feed_follow iff
-    LEFT JOIN feeds f ON f.id = iff.feed_ID
-    LEFT JOIN users u ON u.id = iff.user_ID
+    INNER JOIN feeds f ON f.id = iff.feed_ID
+    INNER JOIN users u ON u.id = iff.user_ID
 `
 
 type FollowFeedParams struct {
@@ -86,8 +86,8 @@ type FollowFeedRow struct {
 	UpdatedAt time.Time
 	UserID    uuid.UUID
 	FeedID    uuid.UUID
-	FeedName  sql.NullString
-	UserName  sql.NullString
+	FeedName  string
+	UserName  string
 }
 
 func (q *Queries) FollowFeed(ctx context.Context, arg FollowFeedParams) (FollowFeedRow, error) {
@@ -160,6 +160,60 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
 	for rows.Next() {
 		var i GetFeedsRow
 		if err := rows.Scan(&i.FeedName, &i.FeedUrl, &i.UserName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserFeedFollows = `-- name: GetUserFeedFollows :many
+SELECT
+    ff.id, ff.created_at, ff.updated_at, ff.user_id, ff.feed_id,
+    f.name as feed_name,
+    u.name as user_name
+FROM
+    feed_follows ff
+    INNER JOIN feeds f ON f.id = ff.feed_ID
+    INNER JOIN users u ON u.id = ff.user_ID
+WHERE
+    ff.user_ID = $1
+`
+
+type GetUserFeedFollowsRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	FeedID    uuid.UUID
+	FeedName  string
+	UserName  string
+}
+
+func (q *Queries) GetUserFeedFollows(ctx context.Context, userID uuid.UUID) ([]GetUserFeedFollowsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserFeedFollows, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserFeedFollowsRow
+	for rows.Next() {
+		var i GetUserFeedFollowsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.FeedID,
+			&i.FeedName,
+			&i.UserName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
