@@ -32,15 +32,14 @@ func handleAggregate(s *state, cmd command) error {
 
 func handleAddFeed(s *state, cmd command) error {
 	if len(cmd.Args) < 1 {
-		return errors.New("RSS feed name is required argument (1)")
+		return errors.New("RSS feed name is required argument (1), usage: 'addfeed NAME URL'")
 	}
 	if len(cmd.Args) < 2 {
-		return errors.New("RSS feed URL is required argument (2)")
+		return errors.New("RSS feed URL is required argument (2), usage: 'addfeed NAME URL'")
 	}
 	if len(cmd.Args) > 2 {
-		return fmt.Errorf("got over 2 arguments (%d): %v", len(cmd.Args), cmd.Args)
+		return fmt.Errorf("got over 2 arguments (%d): %v, usage: 'addfeed NAME URL'", len(cmd.Args), cmd.Args)
 	}
-	fmt.Printf("Adding RSS feed with name [%s] and URL [%s]\n", cmd.Args[0], cmd.Args[1])
 
 	// Add validation that URL starts with http(s) and ends in .xml to ensure correct format.
 
@@ -106,17 +105,16 @@ func printFeed(feed database.GetFeedsRow) {
 
 func handleFollowFeed(s *state, cmd command) error {
 	if len(cmd.Args) < 1 {
-		return errors.New("feed URL is required argument")
+		return errors.New("feed URL is required argument (1), usage: 'follow URL'")
 	}
 	if len(cmd.Args) > 1 {
-		return fmt.Errorf("got over 1 argument (%d): %v", len(cmd.Args), cmd.Args)
+		return fmt.Errorf("got over 1 argument (%d): %v,  usage: 'follow URL'", len(cmd.Args), cmd.Args)
 	}
 	feedURL := cmd.Args[0]
 	feed, err := s.db.GetFeedByURL(context.Background(), feedURL)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Printf("Feed with url [%s] doesn't exist. Add it by using 'addfeed [url]' command first", feedURL)
-			return nil
+			return fmt.Errorf("feed with url [%s] doesn't exist. Add it by using 'addfeed URL' command first", feedURL)
 		}
 		return fmt.Errorf("unable to get feed with URL [%s]: %w", feedURL, err)
 	}
@@ -154,7 +152,7 @@ func handleListFollowedFeeds(s *state, cmd command) error {
 	}
 
 	if len(feeds) == 0 {
-		fmt.Println("You are not following any feeds. Follow on by using 'addfeed [url]' command")
+		fmt.Println("You are not following any feeds. Follow on by using 'addfeed URL' command")
 		return nil
 	}
 	fmt.Println("The RSS feeds you're following:")

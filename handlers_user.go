@@ -16,7 +16,7 @@ import (
 // and sets the current user to the one provided in the argument.
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
-		return errors.New("username is required argument")
+		return errors.New("username is required argument (1), usage: 'login USERNAME'")
 	}
 
 	name := cmd.Args[0]
@@ -39,10 +39,10 @@ func handlerLogin(s *state, cmd command) error {
 // Username is passed as command argument and needs to be unique.
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.Args) < 1 {
-		return errors.New("username is required argument")
+		return errors.New("username is required argument (1), usage: register USERNAME")
 	}
 	if len(cmd.Args) > 1 {
-		return fmt.Errorf("got over 1 argument (%d): %v", len(cmd.Args), cmd.Args)
+		return fmt.Errorf("got over 1 argument (%d): %v, usage: register USERNAME", len(cmd.Args), cmd.Args)
 	}
 
 	name := cmd.Args[0]
