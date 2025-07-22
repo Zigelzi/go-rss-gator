@@ -30,7 +30,7 @@ func handleAggregate(s *state, cmd command) error {
 	return nil
 }
 
-func handleAddFeed(s *state, cmd command) error {
+func handleAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) < 1 {
 		return errors.New("RSS feed name is required argument (1), usage: 'addfeed NAME URL'")
 	}
@@ -42,13 +42,6 @@ func handleAddFeed(s *state, cmd command) error {
 	}
 
 	// Add validation that URL starts with http(s) and ends in .xml to ensure correct format.
-
-	currentUserName := s.currentConfig.CurrentUserName
-	user, err := s.db.GetUser(context.Background(), currentUserName)
-	if err != nil {
-		return fmt.Errorf("unable to get current user: %w", err)
-	}
-
 	feedURL := cmd.Args[1]
 	feed, err := s.db.CreateFeed(context.Background(),
 		database.CreateFeedParams{
@@ -103,7 +96,7 @@ func printFeed(feed database.GetFeedsRow) {
 	fmt.Printf("[%s] %s - %s\n", feed.UserName.String, feed.FeedName, feed.FeedUrl)
 }
 
-func handleFollowFeed(s *state, cmd command) error {
+func handleFollowFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) < 1 {
 		return errors.New("feed URL is required argument (1), usage: 'follow URL'")
 	}
@@ -117,10 +110,6 @@ func handleFollowFeed(s *state, cmd command) error {
 			return fmt.Errorf("feed with url [%s] doesn't exist. Add it by using 'addfeed URL' command first", feedURL)
 		}
 		return fmt.Errorf("unable to get feed with URL [%s]: %w", feedURL, err)
-	}
-	user, err := s.db.GetUser(context.Background(), s.currentConfig.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("unable to get user [%s]: %w", s.currentConfig.CurrentUserName, err)
 	}
 
 	followedFeed, err := s.db.FollowFeed(context.Background(), database.FollowFeedParams{
@@ -141,11 +130,7 @@ func handleFollowFeed(s *state, cmd command) error {
 	return nil
 }
 
-func handleListFollowedFeeds(s *state, cmd command) error {
-	user, err := s.db.GetUser(context.Background(), s.currentConfig.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("unable to get user: %w", err)
-	}
+func handleListFollowedFeeds(s *state, cmd command, user database.User) error {
 	feeds, err := s.db.GetUserFeedFollows(context.Background(), user.ID)
 	if err != nil {
 		return fmt.Errorf("unable to get feeds: %w", err)

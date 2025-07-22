@@ -45,10 +45,10 @@ func main() {
 
 	// RSS feeds
 	cmds.register("agg", handleAggregate)
-	cmds.register("addfeed", handleAddFeed)
 	cmds.register("feeds", handleListFeeds)
-	cmds.register("follow", handleFollowFeed)
-	cmds.register("following", handleListFollowedFeeds)
+	cmds.register("addfeed", middlewareLoggedIn(handleAddFeed))
+	cmds.register("follow", middlewareLoggedIn(handleFollowFeed))
+	cmds.register("following", middlewareLoggedIn(handleListFollowedFeeds))
 
 	if len(os.Args) < 2 {
 		log.Fatal("command arguments are missing")
