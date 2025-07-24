@@ -146,3 +146,29 @@ func handleListFollowedFeeds(s *state, cmd command, user database.User) error {
 	}
 	return nil
 }
+
+func handleUnfollowFeed(s *state, cmd command, user database.User) error {
+	if len(cmd.Args) < 1 {
+		return errors.New("feed URL is required argument (1), usage: 'unfollow URL'")
+	}
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("got over 1 argument (%d): %v,  usage: 'unfollow URL'", len(cmd.Args), cmd.Args)
+	}
+	feedURL := cmd.Args[0]
+	feed, err := s.db.GetFeedByURL(context.Background(), feedURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("no feed with URL %s exists", feedURL)
+		}
+		return fmt.Errorf("unable to get feed: %w", err)
+	}
+	err = s.db.UnfollowFeed(context.Background(), database.UnfollowFeedParams{
+		UserID: user.ID,
+		FeedID: feed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to unfollow feed with URL [%s]: %w", feedURL, err)
+	}
+	fmt.Printf("Successfully unfollowed feed %s - %s", feed.Name, feed.Url)
+	return nil
+}
