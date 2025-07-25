@@ -14,14 +14,39 @@ import (
 )
 
 func handleAggregate(s *state, cmd command) error {
+	if len(cmd.Args) < 1 {
+		return errors.New("feed URL is required argument (1), usage: 'agg URL'")
+	}
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("got over 1 argument (%d): %v,  usage: 'agg URL'", len(cmd.Args), cmd.Args)
+	}
+	feedURL := cmd.Args[0]
 
-	feed, err := rss.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	feed, err := s.db.GetFeedByURL(context.Background(), feedURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("no feed with URL [%s] exists", feedURL)
+		}
+		return fmt.Errorf("unable to get feed with URL [%s]: %w", feedURL, err)
+	}
+
+	lastFetchedAt := sql.NullTime{
+		Time:  time.Now().UTC(),
+		Valid: true,
+	}
+
+	s.db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{
+		ID:            feed.ID,
+		UpdatedAt:     time.Now().UTC(),
+		LastFetchedAt: lastFetchedAt,
+	})
+	feedContent, err := rss.FetchFeed(context.Background(), feed.Url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch feed from: %w", err)
 	}
-	fmt.Println(feed.Channel.Title)
-	fmt.Println(feed.Channel.Description)
-	for _, item := range feed.Channel.Items {
+	fmt.Println(feedContent.Channel.Title)
+	fmt.Println(feedContent.Channel.Description)
+	for _, item := range feedContent.Channel.Items {
 		fmt.Println(item.Title)
 		fmt.Println(item.Description)
 		fmt.Println(item.PublishDate)

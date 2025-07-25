@@ -19,7 +19,7 @@ INSERT INTO
 VALUES
     ($1, $2, $3, $4, $5, $6)
 RETURNING
-    id, created_at, updated_at, name, url, user_id
+    id, created_at, updated_at, name, url, user_id, last_fetched_at
 `
 
 type CreateFeedParams struct {
@@ -48,6 +48,7 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 		&i.Name,
 		&i.Url,
 		&i.UserID,
+		&i.LastFetchedAt,
 	)
 	return i, err
 }
@@ -113,7 +114,7 @@ func (q *Queries) FollowFeed(ctx context.Context, arg FollowFeedParams) (FollowF
 
 const getFeedByURL = `-- name: GetFeedByURL :one
 SELECT
-    id, created_at, updated_at, name, url, user_id
+    id, created_at, updated_at, name, url, user_id, last_fetched_at
 from
     feeds
 WHERE
@@ -130,6 +131,7 @@ func (q *Queries) GetFeedByURL(ctx context.Context, url string) (Feed, error) {
 		&i.Name,
 		&i.Url,
 		&i.UserID,
+		&i.LastFetchedAt,
 	)
 	return i, err
 }
@@ -225,6 +227,24 @@ func (q *Queries) GetUserFeedFollows(ctx context.Context, userID uuid.UUID) ([]G
 		return nil, err
 	}
 	return items, nil
+}
+
+const markFeedFetched = `-- name: MarkFeedFetched :exec
+UPDATE feeds
+SET updated_at=$2,
+    last_fetched_at=$3
+WHERE id=$1
+`
+
+type MarkFeedFetchedParams struct {
+	ID            uuid.UUID
+	UpdatedAt     time.Time
+	LastFetchedAt sql.NullTime
+}
+
+func (q *Queries) MarkFeedFetched(ctx context.Context, arg MarkFeedFetchedParams) error {
+	_, err := q.db.ExecContext(ctx, markFeedFetched, arg.ID, arg.UpdatedAt, arg.LastFetchedAt)
+	return err
 }
 
 const unfollowFeed = `-- name: UnfollowFeed :exec

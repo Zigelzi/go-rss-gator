@@ -57,3 +57,9 @@ WHERE
 -- name: UnfollowFeed :exec
 DELETE FROM feed_follows
 WHERE user_ID=$1 AND feed_ID=$2;
+
+-- name: MarkFeedFetched :exec
+UPDATE feeds
+SET updated_at=$2,
+    last_fetched_at=$3
+WHERE id=$1;
