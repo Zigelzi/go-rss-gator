@@ -44,15 +44,29 @@ func handleAggregate(s *state, cmd command) error {
 	if err != nil {
 		return fmt.Errorf("unable to fetch feed from: %w", err)
 	}
-	fmt.Println(feedContent.Channel.Title)
-	fmt.Println(feedContent.Channel.Description)
-	for _, item := range feedContent.Channel.Items {
+	printFeedContent(feedContent)
+
+	return nil
+}
+
+func printFeedContent(rssFeed *rss.RSSFeed) {
+	fmt.Println(rssFeed.Channel.Title)
+	fmt.Println(rssFeed.Channel.Description)
+	fmt.Println()
+	for _, item := range rssFeed.Channel.Items[:5] {
 		fmt.Println(item.Title)
 		fmt.Println(item.Description)
-		fmt.Println(item.PublishDate)
+
+		pubTimestamp, err := time.Parse(time.RFC1123, item.PublishDate)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Printf("Published: %.0f h\n",
+			time.Since(pubTimestamp).Hours())
+		fmt.Println(strings.Repeat("-", 30))
 		fmt.Println()
 	}
-	return nil
 }
 
 func handleAddFeed(s *state, cmd command, user database.User) error {

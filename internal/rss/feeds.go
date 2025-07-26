@@ -11,7 +11,7 @@ import (
 )
 
 func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
-	fmt.Printf("Fetching RSS feed from: %s\n", feedURL)
+	fmt.Printf("Fetching RSS feed from: %s\n\n", feedURL)
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create request: %w", err)
