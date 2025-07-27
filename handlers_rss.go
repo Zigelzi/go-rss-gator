@@ -9,64 +9,27 @@ import (
 	"time"
 
 	"github.com/Zigelzi/go-rss-gator/internal/database"
-	"github.com/Zigelzi/go-rss-gator/internal/rss"
 	"github.com/google/uuid"
 )
 
 func handleAggregate(s *state, cmd command) error {
 	if len(cmd.Args) < 1 {
-		return errors.New("feed URL is required argument (1), usage: 'agg URL'")
+		return errors.New("feed URL is required argument (1), usage: 'agg TIME_BETWEEN_REQUESTS'")
 	}
 	if len(cmd.Args) > 1 {
-		return fmt.Errorf("got over 1 argument (%d): %v,  usage: 'agg URL'", len(cmd.Args), cmd.Args)
+		return fmt.Errorf("got over 1 argument (%d): %v,  usage: 'agg TIME_BETWEEN_REQUESTS'", len(cmd.Args), cmd.Args)
 	}
-	feedURL := cmd.Args[0]
-
-	feed, err := s.db.GetFeedByURL(context.Background(), feedURL)
+	timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return fmt.Errorf("no feed with URL [%s] exists", feedURL)
-		}
-		return fmt.Errorf("unable to get feed with URL [%s]: %w", feedURL, err)
+		return fmt.Errorf("unable to parse time between requests argument: %w", err)
 	}
-
-	lastFetchedAt := sql.NullTime{
-		Time:  time.Now().UTC(),
-		Valid: true,
+	fmt.Printf("Collecting feeds every %s\n", timeBetweenRequests)
+	ticker := time.NewTicker(timeBetweenRequests)
+	for ; ; <-ticker.C {
+		scrapeFeed(s)
 	}
-
-	s.db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{
-		ID:            feed.ID,
-		UpdatedAt:     time.Now().UTC(),
-		LastFetchedAt: lastFetchedAt,
-	})
-	feedContent, err := rss.FetchFeed(context.Background(), feed.Url)
-	if err != nil {
-		return fmt.Errorf("unable to fetch feed from: %w", err)
-	}
-	printFeedContent(feedContent)
 
 	return nil
-}
-
-func printFeedContent(rssFeed *rss.RSSFeed) {
-	fmt.Println(rssFeed.Channel.Title)
-	fmt.Println(rssFeed.Channel.Description)
-	fmt.Println()
-	for _, item := range rssFeed.Channel.Items[:5] {
-		fmt.Println(item.Title)
-		fmt.Println(item.Description)
-
-		pubTimestamp, err := time.Parse(time.RFC1123, item.PublishDate)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		fmt.Printf("Published: %.0f h\n",
-			time.Since(pubTimestamp).Hours())
-		fmt.Println(strings.Repeat("-", 30))
-		fmt.Println()
-	}
 }
 
 func handleAddFeed(s *state, cmd command, user database.User) error {

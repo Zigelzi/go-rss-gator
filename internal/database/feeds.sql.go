@@ -175,6 +175,32 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
 	return items, nil
 }
 
+const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
+SELECT id, created_at, last_fetched_at, url
+FROM feeds
+ORDER BY last_fetched_at asc NULLS FIRST, created_at ASC
+LIMIT 1
+`
+
+type GetNextFeedToFetchRow struct {
+	ID            uuid.UUID
+	CreatedAt     time.Time
+	LastFetchedAt sql.NullTime
+	Url           string
+}
+
+func (q *Queries) GetNextFeedToFetch(ctx context.Context) (GetNextFeedToFetchRow, error) {
+	row := q.db.QueryRowContext(ctx, getNextFeedToFetch)
+	var i GetNextFeedToFetchRow
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.LastFetchedAt,
+		&i.Url,
+	)
+	return i, err
+}
+
 const getUserFeedFollows = `-- name: GetUserFeedFollows :many
 SELECT
     ff.id, ff.created_at, ff.updated_at, ff.user_id, ff.feed_id,
