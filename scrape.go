@@ -5,9 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/Zigelzi/go-rss-gator/internal/database"
 	"github.com/Zigelzi/go-rss-gator/internal/rss"
 )
 
@@ -28,16 +26,8 @@ func scrapeFeed(s *state) {
 		return
 	}
 
-	lastFetchedAt := sql.NullTime{
-		Time:  time.Now().UTC(),
-		Valid: true,
-	}
-
-	s.db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{
-		ID:            nextFeed.ID,
-		UpdatedAt:     time.Now().UTC(),
-		LastFetchedAt: lastFetchedAt,
-	})
+	s.db.MarkFeedFetched(context.Background(), nextFeed.ID)
 
 	printFeedContent(feedContent)
+	log.Printf("Scraped feed %s with %d posts", nextFeed.Name, len(feedContent.Channel.Items))
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Zigelzi/go-rss-gator/internal/database"
 	"github.com/Zigelzi/go-rss-gator/internal/rss"
 )
 
@@ -43,4 +44,8 @@ func parseTimestamp(timestampStr string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, fmt.Errorf("unable to parse timestamp: %s", timestampStr)
+}
+
+func printFeedDetails(feed database.GetFeedsRow) {
+	fmt.Printf("[%s] %s - %s\n", feed.UserName.String, feed.FeedName, feed.FeedUrl)
 }

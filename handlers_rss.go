@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -28,8 +29,6 @@ func handleAggregate(s *state, cmd command) error {
 	for ; ; <-ticker.C {
 		scrapeFeed(s)
 	}
-
-	return nil
 }
 
 func handleAddFeed(s *state, cmd command, user database.User) error {
@@ -88,14 +87,10 @@ func handleListFeeds(s *state, cmd command) error {
 	fmt.Println("[Username] RSS feed title - RSS feed URL")
 	fmt.Println(strings.Repeat("-", 10))
 	for _, feed := range feeds {
-		printFeed(feed)
+		printFeedDetails(feed)
 	}
 	fmt.Println(strings.Repeat("-", 10))
 	return nil
-}
-
-func printFeed(feed database.GetFeedsRow) {
-	fmt.Printf("[%s] %s - %s\n", feed.UserName.String, feed.FeedName, feed.FeedUrl)
 }
 
 func handleFollowFeed(s *state, cmd command, user database.User) error {
@@ -125,7 +120,7 @@ func handleFollowFeed(s *state, cmd command, user database.User) error {
 		return fmt.Errorf("unable to follow feed [%s]: %w", feedURL, err)
 	}
 
-	fmt.Printf("%s started to follow feed: %s - %s\n",
+	log.Printf("%s started to follow feed: %s - %s\n",
 		followedFeed.UserName,
 		followedFeed.FeedName,
 		feedURL)

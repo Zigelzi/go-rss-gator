@@ -60,12 +60,12 @@ WHERE user_ID=$1 AND feed_ID=$2;
 
 -- name: MarkFeedFetched :exec
 UPDATE feeds
-SET updated_at=$2,
-    last_fetched_at=$3
+SET updated_at=NOW(),
+    last_fetched_at=NOW()
 WHERE id=$1;
 
 -- name: GetNextFeedToFetch :one
-SELECT id, created_at, last_fetched_at, url
+SELECT id, created_at, last_fetched_at, url, name
 FROM feeds
 ORDER BY last_fetched_at asc NULLS FIRST, created_at ASC
 LIMIT 1;
