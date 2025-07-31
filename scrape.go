@@ -28,6 +28,10 @@ func scrapeFeed(s *state) {
 
 	s.db.MarkFeedFetched(context.Background(), nextFeed.ID)
 
-	printFeedContent(feedContent)
+	err = rss.SaveFeedPosts(s.db, feedContent, nextFeed.ID)
+	if err != nil {
+		log.Printf("unable to save posts: %v", err)
+	}
+	// printFeedContent(feedContent)
 	log.Printf("Scraped feed %s with %d posts", nextFeed.Name, len(feedContent.Channel.Items))
 }
