@@ -50,6 +50,7 @@ func main() {
 	cmds.register("follow", middlewareLoggedIn(handleFollowFeed))
 	cmds.register("unfollow", middlewareLoggedIn(handleUnfollowFeed))
 	cmds.register("following", middlewareLoggedIn(handleListFollowedFeeds))
+	cmds.register("browse", middlewareLoggedIn(handleBrowsePosts))
 
 	if len(os.Args) < 2 {
 		log.Fatal("command arguments are missing")

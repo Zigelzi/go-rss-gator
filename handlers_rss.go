@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -167,5 +168,38 @@ func handleUnfollowFeed(s *state, cmd command, user database.User) error {
 		return fmt.Errorf("unable to unfollow feed with URL [%s]: %w", feedURL, err)
 	}
 	fmt.Printf("Successfully unfollowed feed %s - %s", feed.Name, feed.Url)
+	return nil
+}
+
+func handleBrowsePosts(s *state, cmd command, user database.User) error {
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("got over 1 argument (%d): %v,  usage: 'browse [LIMIT]'", len(cmd.Args), cmd.Args)
+	}
+
+	postLimit := 2
+	var err error
+	if len(cmd.Args) == 1 {
+		postLimit, err = strconv.Atoi(cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("unable to parse the limit argument: %w", err)
+		}
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
+		ID:    user.ID,
+		Limit: int32(postLimit),
+	})
+	if err != nil {
+		return fmt.Errorf("unable to get posts for user [%s]: %w", user.Name, err)
+	}
+
+	for _, post := range posts {
+		hoursSincePublished := time.Since(post.PublishedAt).Hours()
+		fmt.Println(post.Title)
+		fmt.Println(post.Description.String)
+		fmt.Printf("Published: %v (%.f h ago)\n", post.PublishedAt.Format(time.DateTime), hoursSincePublished)
+		fmt.Printf("Read more: %s\n\n", post.Url)
+	}
+
 	return nil
 }
