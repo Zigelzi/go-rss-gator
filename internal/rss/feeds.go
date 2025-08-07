@@ -67,20 +67,19 @@ func SaveFeedPosts(db *database.Queries, rssFeed *RSSFeed, feedId uuid.UUID) err
 	// Loop through all the posts and try to save them.
 	// Continue to next post if saving fails. Optionally store which posts weren't saved.
 	for _, post := range rssFeed.Channel.Items {
-		desc := sql.NullString{
-			String: post.Description,
-			Valid:  true,
-		}
 		publishedAt, err := parseTimestamp(post.PublishDate)
 		if err != nil {
 			return err
 		}
 		_, err = db.CreatePost(context.Background(), database.CreatePostParams{
-			ID:          uuid.New(),
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
-			Title:       post.Title,
-			Description: desc,
+			ID:        uuid.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			Title:     post.Title,
+			Description: sql.NullString{
+				String: post.Description,
+				Valid:  true,
+			},
 			Url:         post.Link,
 			PublishedAt: publishedAt,
 			FeedID:      feedId,

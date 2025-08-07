@@ -32,6 +32,5 @@ func scrapeFeed(s *state) {
 	if err != nil {
 		log.Printf("unable to save posts: %v", err)
 	}
-	// printFeedContent(feedContent)
 	log.Printf("Scraped feed %s with %d posts", nextFeed.Name, len(feedContent.Channel.Items))
 }
