@@ -73,9 +73,9 @@ SELECT
 FROM
     posts p
     INNER JOIN feeds f ON f.id = p.feed_ID
-    INNER JOIN users u ON u.id = f.user_ID
+    INNER JOIN feed_follows ff ON ff.feed_id = f.id
 WHERE
-    u.id = $1
+    ff.user_id = $1
 ORDER BY
     p.published_at DESC
 LIMIT
@@ -83,12 +83,12 @@ LIMIT
 `
 
 type GetPostsForUserParams struct {
-	ID    uuid.UUID
-	Limit int32
+	UserID uuid.UUID
+	Limit  int32
 }
 
 func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsForUser, arg.ID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, getPostsForUser, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

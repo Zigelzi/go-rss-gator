@@ -186,8 +186,8 @@ func handleBrowsePosts(s *state, cmd command, user database.User) error {
 	}
 
 	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
-		ID:    user.ID,
-		Limit: int32(postLimit),
+		UserID: user.ID,
+		Limit:  int32(postLimit),
 	})
 	if err != nil {
 		return fmt.Errorf("unable to get posts for user [%s]: %w", user.Name, err)
